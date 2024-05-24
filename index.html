@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Function Script Converter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+
+    h2, h3 {
+      color: #555;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    th, td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    textarea {
+      width: 100%;
+      height: 300px;
+      resize: none;
+      overflow: auto;
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .button-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 0 10px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .label {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .table-container {
+      margin-top: 20px;
+      padding: 12px;
+      background-color: #f5f5f5;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Convert PostgreSQL Function Script</h2>
+
+  <div class="table-container">
+    <h3 class="label">Table Replacement</h3>
+    <table id="tableReplacementsTable">
+      <thead>
+        <tr>
+          <th>Original Table</th>
+          <th>Replacement Table</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tableReplacementsBody"></tbody>
+    </table>
+    <div class="label">Add Table Replacement</div>
+    <div id="addTableReplacementContainer">
+      <input type="text" id="originalTable" placeholder="Enter the original table name">
+      <input type="text" id="replacementTable" placeholder="Enter the replacement table name">
+      <button onclick="addTableReplacement()">Add Replacement</button>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <h3 class="label">Field Mappings</h3>
+    <div class="label">Add Field Mapping</div>
+    <input type="text" id="originalField" placeholder="Enter the original field name">
+    <input type="text" id="replacementField" placeholder="Enter the replacement field name">
+    <button onclick="addFieldMapping()">Add Mapping</button>
+    <div>
+      <table id="fieldMappingsTable">
+        <thead>
+          <tr>
+            <th>Original Field</th>
+            <th>Replacement Field</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="fieldMappingsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <table>
+    <tr>
+      <th class="label">Input Script</th>
+      <th class="label">Output Script</th>
+    </tr>
+    <tr>
+      <td><textarea id="inputScript" placeholder="Enter your PostgreSQL function script here"></textarea></td>
+      <td><textarea id="outputScript" placeholder="Converted script will appear here" readonly></textarea></td>
+    </tr>
+  </table>
+
+  <div class="button-container">
+    <button onclick="clearTextAreas()">Clear Text Areas</button>
+    <button onclick="convertScript()">Convert Script</button>
+    <button onclick="copyToClipboard()">Copy to Clipboard</button>
+  </div>
+
+  <script>
+    const tableReplacements = [];
+    const fieldMappings = [];
+
+    function addTableReplacement() {
+      if (tableReplacements.length === 0) {
+        const originalTable = document.getElementById('originalTable').value;
+        const replacementTable = document.getElementById('replacementTable').value;
+        tableReplacements.push({ originalTable, replacementTable });
+        document.getElementById('originalTable').value = '';
+        document.getElementById('replacementTable').value = '';
+        updateTableReplacementsDisplay();
+        document.getElementById('addTableReplacementContainer').style.display = 'none';
+      } else {
+        alert('You can only add one table replacement.');
+      }
+    }
+
+    function addFieldMapping() {
+      const originalField = document.getElementById('originalField').value;
+      const replacementField = document.getElementById('replacementField').value;
+      fieldMappings.push({ originalField, replacementField });
+      document.getElementById('originalField').value = '';
+      document.getElementById('replacementField').value = '';
+      updateFieldMappingsDisplay();
+    }
+
+    function updateTableReplacementsDisplay() {
+      const tableReplacementsBody = document.getElementById('tableReplacementsBody');
+      tableReplacementsBody.innerHTML = '';
+      for (const { originalTable, replacementTable } of tableReplacements) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${originalTable}</td>
+          <td>${replacementTable}</td>
+          <td><button onclick="removeTableReplacement('${originalTable}')">Remove</button></td>
+        `;
+        tableReplacementsBody.appendChild(row);
+      }
+    }
+
+    function updateFieldMappingsDisplay() {
+      const fieldMappingsBody = document.getElementById('fieldMappingsBody');
+      fieldMappingsBody.innerHTML = '';
+      for (const { originalField, replacementField } of fieldMappings) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${originalField}</td>
+          <td>${replacementField}</td>
+          <td><button onclick="removeFieldMapping('${originalField}')">Remove</button></td>
+        `;
+        fieldMappingsBody.appendChild(row);
+      }
+    }
+
+    function removeTableReplacement(originalTable) {
+      const index = tableReplacements.findIndex(r => r.originalTable === originalTable);
+      if (index !== -1) {
+        tableReplacements.splice(index, 1);
+        updateTableReplacementsDisplay();
+        document.getElementById('addTableReplacementContainer').style.display = 'block';
+      }
+    }
+
+    function removeFieldMapping(originalField) {
+      const index = fieldMappings.findIndex(m => m.originalField === originalField);
+      if (index !== -1) {
+        fieldMappings.splice(index, 1);
+        updateFieldMappingsDisplay();
+      }
+    }
+
+    function convertScript() {
+      const inputScript = document.getElementById('inputScript').value;
+      const outputScript = replaceScript(inputScript);
+      document.getElementById('outputScript').value = outputScript;
+    }
+
+    function replaceScript(script) {
+      for (const { originalTable, replacementTable } of tableReplacements) {
+        const regex = new RegExp(originalTable, 'g');
+        script = script.replace(regex, replacementTable);
+      }
+      for (const { originalField, replacementField } of fieldMappings) {
+        const regex = new RegExp(originalField, 'g');
+        script = script.replace(regex, replacementField);
+      }
+      return script;
+    }
+
+    function copyToClipboard() {
+      const outputScript = document.getElementById('outputScript');
+      outputScript.select();
+      outputScript.setSelectionRange(0, 99999);
+      document.execCommand('copy');
+      alert('Converted script copied to clipboard!');
+    }
+
+    function clearTextAreas() {
+      document.getElementById('inputScript').value = '';
+      document.getElementById('outputScript').value = '';
+    }
+  </script>
+</body>
+</html>
