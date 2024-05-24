@@ -217,17 +217,23 @@
       document.getElementById('outputScript').value = outputScript;
     }
 
-    function replaceScript(script) {
-      for (const { originalTable, replacementTable } of tableReplacements) {
-        const regex = new RegExp(originalTable, 'g');
-        script = script.replace(regex, replacementTable);
-      }
-      for (const { originalField, replacementField } of fieldMappings) {
-        const regex = new RegExp(originalField, 'g');
-        script = script.replace(regex, replacementField);
-      }
-      return script;
-    }
+function replaceScript(script) {
+  // Preprocess script to remove unnecessary white spaces
+  script = script.replace(/(\s*->>\s*)/g, '->>');
+
+  for (const { originalTable, replacementTable } of tableReplacements) {
+    script = script.replace(new RegExp(escapeRegExp(originalTable), 'g'), replacementTable);
+  }
+  for (const { originalField, replacementField } of fieldMappings) {
+    script = script.replace(new RegExp(escapeRegExp(originalField), 'g'), replacementField);
+  }
+  return script;
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 
     function copyToClipboard() {
       const outputScript = document.getElementById('outputScript');
